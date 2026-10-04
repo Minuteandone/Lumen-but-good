@@ -32,3 +32,21 @@ The renderer defaults to 960×540 at 24 fps. Set `LUMEN_SCALE=2` for supersample
 - `episodes/ep01_audio.py` — Episode 1 soundscape and score
 - `stills/` — optional rendered development frames
 - `media/` — local rendered outputs (ignored by git except placeholders)
+
+
+## Resumable render
+
+For the full episode, the chunked renderer is safer than one six-minute render:
+
+```bash
+python tools/render_full.py --fps 24 --chunk-seconds 15 --missing
+python tools/render_full.py --fps 24 --chunk-seconds 15 --assemble
+```
+
+For quick scene checks:
+
+```bash
+python tools/render_segment.py 196 242 media/test_moth.mp4 --fps 12 --preset veryfast
+```
+
+The finished development cut was assembled at 960×540 / 12 fps from time-contiguous chunks; the source still defaults to 24 fps for a smoother final-quality re-render.
