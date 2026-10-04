@@ -426,7 +426,7 @@ def frame_at(t: float) -> Image.Image:
             img = apply_lighting(img, em, cam,
                                  [(1780, 315, 290, .72, (1.0, .78, .48)),
                                   (1760, 320, 420, .24, (.92, .94, .88))],
-                                 ambient=.115, haze=.010, vignette=.29)
+                                 ambient=.22, haze=.010, vignette=.32)
             return add_letterbox(img)
 
         # Reaction shot: the comedy is that neither of them has a plan for *that much station*.
@@ -446,7 +446,7 @@ def frame_at(t: float) -> Image.Image:
 
         # Final wider hold. No solution yet; just scale.
         cam = Camera(x=2610, y=285, zoom=.365)
-        draw_far_station(img, cam, power=.16)
+        draw_far_station(img, cam, power=.18)
         em = make_emissive()
         d = ImageDraw.Draw(img)
         ax0, ay0 = cam.p(1665, 270); ax1, ay1 = cam.p(1860, 435)
@@ -455,7 +455,7 @@ def frame_at(t: float) -> Image.Image:
         draw_moth(img, em, cam, 1818, 318, t, perch=True, glow=.55)
         img = apply_lighting(img, em, cam,
                              [(1780,315,285,.66,(1.0,.78,.48))],
-                             ambient=.10, haze=.010, vignette=.31)
+                             ambient=.18, haze=.010, vignette=.34)
         return add_letterbox(img)
 
     return title_card(t)
