@@ -363,23 +363,53 @@ def frame_at(t: float) -> Image.Image:
             img = apply_lighting(img, em, cam, lights, ambient=.31, vignette=.14)
             return add_letterbox(img)
 
-        cam = Camera(x=kf(t, [(361, 1900), (365, 2310), (369.5, 2580), (371, 2580)]),
-                     y=kf(t, [(361, 284), (369.5, 285)]),
-                     zoom=kf(t, [(361, .82), (365, .55), (369.5, .39), (371, .39)]))
-        draw_far_station(img, cam, power=.18)
+        # First reveal: pull out until the restored chamber becomes a postage stamp.
+        if t < 366.5:
+            cam = Camera(x=kf(t, [(361, 1900), (364, 2280), (366.5, 2520)]),
+                         y=kf(t, [(361, 284), (366.5, 285)]),
+                         zoom=kf(t, [(361, .82), (364, .56), (366.5, .43)]))
+            draw_far_station(img, cam, power=.18)
+            em = make_emissive()
+            d = ImageDraw.Draw(img)
+            ax0, ay0 = cam.p(1665, 270); ax1, ay1 = cam.p(1860, 435)
+            d.rectangle([ax0, ay0, ax1, ay1], fill=(55, 61, 66))
+            bx, by = draw_lumen(img, em, cam, 1780, 430, mood="neutral", gaze_x=1,
+                                tilt=-2, bulb=.68)
+            mx, my = 1818, 318
+            draw_moth(img, em, cam, mx, my, t, perch=True, glow=.62)
+            img = apply_lighting(img, em, cam,
+                                 [(1780, 315, 290, .72, (1.0, .78, .48)),
+                                  (1760, 320, 420, .24, (.92, .94, .88))],
+                                 ambient=.115, haze=.010, vignette=.29)
+            return add_letterbox(img)
+
+        # Reaction shot: the comedy is that neither of them has a plan for *that much station*.
+        if t < 369.2:
+            cam = Camera(x=1585, y=280, zoom=1.12)
+            draw_station_room(img, cam, clean=1, awake=1, reveal=True)
+            for x in LIGHT_XS:
+                draw_ceiling_light(img, em, cam, x, on=1)
+            bx, by = draw_lumen(img, em, cam, 1490, GROUND, mood="panic", gaze_x=1.2,
+                                tilt=8, bulb=.60)
+            draw_moth(img, em, cam, 1527, 318, t, perch=True, glow=.55)
+            lights = [(bx, by, 220, .52, (1.0, .78, .48))]
+            for x in LIGHT_XS:
+                lights.append((x, 125, 330, .55, (.90, .97, 1.0)))
+            img = apply_lighting(img, em, cam, lights, ambient=.26, vignette=.19)
+            return add_letterbox(img)
+
+        # Final wider hold. No solution yet; just scale.
+        cam = Camera(x=2610, y=285, zoom=.365)
+        draw_far_station(img, cam, power=.16)
         em = make_emissive()
         d = ImageDraw.Draw(img)
-        ax0, ay0 = cam.p(1665, 270)
-        ax1, ay1 = cam.p(1860, 435)
-        d.rectangle([ax0, ay0, ax1, ay1], fill=(55, 61, 66))
-        bx, by = draw_lumen(img, em, cam, 1780, 430, mood="neutral", gaze_x=1,
-                            tilt=-2, bulb=.68)
-        mx, my = 1818, 318
-        draw_moth(img, em, cam, mx, my, t, perch=True, glow=.62)
+        ax0, ay0 = cam.p(1665, 270); ax1, ay1 = cam.p(1860, 435)
+        d.rectangle([ax0, ay0, ax1, ay1], fill=(50, 56, 62))
+        bx, by = draw_lumen(img, em, cam, 1780, 430, mood="neutral", gaze_x=1, bulb=.64)
+        draw_moth(img, em, cam, 1818, 318, t, perch=True, glow=.55)
         img = apply_lighting(img, em, cam,
-                             [(1780, 315, 290, .72, (1.0, .78, .48)),
-                              (1760, 320, 420, .24, (.92, .94, .88))],
-                             ambient=.115, haze=.010, vignette=.29)
+                             [(1780,315,285,.66,(1.0,.78,.48))],
+                             ambient=.10, haze=.010, vignette=.31)
         return add_letterbox(img)
 
     return title_card(t)
