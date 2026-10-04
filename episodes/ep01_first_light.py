@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from engine.cinematic import (  # noqa: E402
-    W, H, FPS, Camera, add_letterbox, apply_lighting, clamp, draw_ceiling_light,
+    W, H, S, FPS, Camera, add_letterbox, apply_lighting, clamp, draw_ceiling_light,
     draw_dust, draw_far_station, draw_floor_lamp, draw_lumen, draw_moth,
     draw_station_room, draw_switch, encode, kf, make_canvas, make_emissive,
     smooth, smoother,
@@ -53,7 +53,7 @@ def title_card(t: float) -> Image.Image:
     alpha = int(255 * min(u, v))
     glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    gd.ellipse([W * .28, H * .22, W * .72, H * .76], fill=(70, 185, 225, int(22 * min(u, v))))
+    gd.ellipse([W * S * .28, H * S * .22, W * S * .72, H * S * .76], fill=(70, 185, 225, int(22 * min(u, v))))
     glow = glow.filter(ImageFilter.GaussianBlur(40))
     img.paste(glow, (0, 0), glow)
 
@@ -61,12 +61,12 @@ def title_card(t: float) -> Image.Image:
     f2 = font(19)
     text = "LUMEN"
     bbox = d.textbbox((0, 0), text, font=f1)
-    x = (W - (bbox[2] - bbox[0])) / 2
-    d.text((x, 214), text, font=f1, fill=(205, 244, 255, alpha))
+    x = (W * S - (bbox[2] - bbox[0])) / 2
+    d.text((x, 214 * S), text, font=f1, fill=(205, 244, 255, alpha))
     sub = "EPISODE 1  ·  FIRST LIGHT"
     bbox = d.textbbox((0, 0), sub, font=f2)
-    x = (W - (bbox[2] - bbox[0])) / 2
-    d.text((x, 288), sub, font=f2, fill=(142, 164, 181, alpha))
+    x = (W * S - (bbox[2] - bbox[0])) / 2
+    d.text((x, 288 * S), sub, font=f2, fill=(142, 164, 181, alpha))
     return img
 
 
@@ -366,7 +366,7 @@ def frame_at(t: float) -> Image.Image:
         cam = Camera(x=kf(t, [(361, 1900), (365, 2310), (369.5, 2580), (371, 2580)]),
                      y=kf(t, [(361, 284), (369.5, 285)]),
                      zoom=kf(t, [(361, .82), (365, .55), (369.5, .39), (371, .39)]))
-        draw_far_station(img, cam, power=.11)
+        draw_far_station(img, cam, power=.18)
         em = make_emissive()
         d = ImageDraw.Draw(img)
         ax0, ay0 = cam.p(1665, 270)
@@ -379,7 +379,7 @@ def frame_at(t: float) -> Image.Image:
         img = apply_lighting(img, em, cam,
                              [(1780, 315, 290, .72, (1.0, .78, .48)),
                               (1760, 320, 420, .24, (.92, .94, .88))],
-                             ambient=.055, haze=.012, vignette=.36)
+                             ambient=.115, haze=.010, vignette=.29)
         return add_letterbox(img)
 
     return title_card(t)
@@ -412,7 +412,7 @@ def main(argv: list[str]) -> int:
     if mode == "render":
         out = argv[2] if len(argv) > 2 else str(ROOT / "media" / "ep01_silent.mp4")
         Path(out).parent.mkdir(parents=True, exist_ok=True)
-        encode(frames(), out, fps=FPS, crf=19, preset="medium")
+        encode(frames(), out, fps=FPS, crf=19, preset=os.environ.get("LUMEN_PRESET", "medium"))
         print(out)
         return 0
     raise SystemExit(f"unknown mode: {mode}")
