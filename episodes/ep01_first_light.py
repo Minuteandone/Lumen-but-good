@@ -421,6 +421,13 @@ def frames():
         yield frame_at(i / FPS)
 
 
+def frames_range(start: float, end: float):
+    i0 = max(0, int(start * FPS))
+    i1 = min(int(DURATION * FPS), int(end * FPS))
+    for i in range(i0, i1):
+        yield frame_at(i / FPS)
+
+
 def render_stills(times: list[float]):
     out = ROOT / "stills"
     out.mkdir(parents=True, exist_ok=True)
@@ -432,7 +439,7 @@ def render_stills(times: list[float]):
 
 def main(argv: list[str]) -> int:
     if len(argv) < 2:
-        print("usage: ep01_first_light.py stills <seconds...> | render <output.mp4>")
+        print("usage: ep01_first_light.py stills <seconds...> | render <output.mp4> | render-range <output.mp4> <start> <end>")
         return 2
     mode = argv[1]
     if mode == "stills":
@@ -443,6 +450,16 @@ def main(argv: list[str]) -> int:
         out = argv[2] if len(argv) > 2 else str(ROOT / "media" / "ep01_silent.mp4")
         Path(out).parent.mkdir(parents=True, exist_ok=True)
         encode(frames(), out, fps=FPS, crf=19, preset=os.environ.get("LUMEN_PRESET", "medium"))
+        print(out)
+        return 0
+    if mode == "render-range":
+        if len(argv) < 5:
+            raise SystemExit("render-range needs: <output.mp4> <start> <end>")
+        out = argv[2]
+        start, end = float(argv[3]), float(argv[4])
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        encode(frames_range(start, end), out, fps=FPS, crf=19,
+               preset=os.environ.get("LUMEN_PRESET", "medium"))
         print(out)
         return 0
     raise SystemExit(f"unknown mode: {mode}")
