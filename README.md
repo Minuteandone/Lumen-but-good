@@ -10,7 +10,7 @@ Lumen boots up alone in an abandoned, dark, dusty station. While exploring, he a
 
 Then they discover the chamber was only the beginning.
 
-Approximate runtime: **6m 18s**. No dialogue.
+Runtime: **6m 18s**. No dialogue.
 
 ## Render
 
@@ -49,4 +49,4 @@ For quick scene checks:
 python tools/render_segment.py 196 242 media/test_moth.mp4 --fps 12 --preset veryfast
 ```
 
-The finished development cut was assembled at 960×540 / 12 fps from time-contiguous chunks; the source still defaults to 24 fps for a smoother final-quality re-render.
+The finished Episode 1 cut was rendered at **960×540 / 24 fps** from time-contiguous 15-second chunks, then losslessly concatenated before the AAC soundtrack was muxed in. The 12 fps option is only useful for faster development previews.
