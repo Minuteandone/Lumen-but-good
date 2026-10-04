@@ -43,6 +43,48 @@ def blink(t: float, start: float, dur: float = 0.16) -> float:
     return 0.0 if start <= t < start + dur else 1.0
 
 
+def draw_cleanup_action(img: Image.Image, cam: Camera, t: float, lx: float) -> None:
+    """Foreground business so the restoration reads as work, not a magic dissolve."""
+    d = ImageDraw.Draw(img)
+
+    if 254 <= t < 272:
+        beat = (t - 254) * 2.1
+        head_x = lx - 92 - math.sin(beat) * 28
+        hand = cam.p(lx - 25, 356)
+        head = cam.p(head_x, 420)
+        d.line([hand, head], fill=(128, 113, 91), width=max(2, int(cam.scale(4))))
+        x0, y0 = cam.p(head_x - 28, 414); x1, y1 = cam.p(head_x + 28, 424)
+        d.rounded_rectangle([x0, y0, x1, y1], radius=max(1, int(cam.scale(3))), fill=(102, 78, 51))
+        for j in range(7):
+            px, py = cam.p(head_x - 42 - j*8 + math.sin(t*4+j)*5, 417 - abs(math.sin(t*3+j))*8)
+            rr = cam.scale(2.5 + (j % 3))
+            d.ellipse([px-rr, py-rr, px+rr, py+rr], fill=(117, 108, 94))
+
+    if 286 <= t < 303:
+        u = q(t, 286, 303)
+        wx = 850 + 220*u + math.sin(t*2.4)*34
+        wy = 235 + math.sin(t*3.1)*48
+        hand = cam.p(lx + 28, 350)
+        cloth = cam.p(wx, wy)
+        d.line([hand, cloth], fill=(102, 113, 126), width=max(2, int(cam.scale(3))))
+        rr = cam.scale(10)
+        d.ellipse([cloth[0]-rr, cloth[1]-rr*.65, cloth[0]+rr, cloth[1]+rr*.65], fill=(140, 177, 183))
+        if int(t*4) % 2 == 0:
+            arc = cam.scale(17)
+            d.arc([cloth[0]-arc, cloth[1]-arc, cloth[0]+arc, cloth[1]+arc], 205, 340,
+                  fill=(191, 222, 226), width=max(1, int(cam.scale(2))))
+
+    if 305 <= t < 319:
+        x0, y0 = cam.p(1390, 255); x1, y1 = cam.p(1450, 345)
+        d.rounded_rectangle([x0, y0, x1, y1], radius=max(1, int(cam.scale(4))),
+                            fill=(30, 38, 47), outline=(91, 102, 112), width=max(1, int(cam.scale(2))))
+        lit = int(clamp((t-307)/8) * 5)
+        for j in range(5):
+            px, py = cam.p(1407, 271+j*13); rr = cam.scale(3)
+            col = (80, 230, 183) if j < lit else (49, 60, 65)
+            d.ellipse([px-rr, py-rr, px+rr, py+rr], fill=col)
+
+
 def title_card(t: float) -> Image.Image:
     img = make_canvas((2, 3, 7))
     d = ImageDraw.Draw(img)
@@ -279,11 +321,15 @@ def frame_at(t: float) -> Image.Image:
         else:
             mx = lx + 120 + math.sin(t * .8) * 70
             my = 245 + math.sin(t * 2.2) * 45
+        if 286 <= t < 303:
+            mx = 1125 + math.sin(t * 1.3) * 32
+            my = 178 + math.sin(t * 2.6) * 18
         arm = (1, -55, 42) if 307 <= t <= 314 else None
         bx, by = draw_lumen(img, em, cam, lx, GROUND, mood="happy", gaze_x=.55,
                             bulb=.66, wheel=(t - 252) * 3.2,
                             tilt=math.sin(t * 1.7) * 2, arm=arm)
         draw_moth(img, em, cam, mx, my, t, perch=perched, glow=.68)
+        draw_cleanup_action(img, cam, t, lx)
 
         d = ImageDraw.Draw(img)
         px0, py0 = cam.p(1510, 384)
