@@ -157,9 +157,9 @@ def frame_at(t: float) -> Image.Image:
 
     # 0:52–1:45 — EXPLORATION. His bulb is a moving island in the dark.
     if t < 105:
-        lx = kf(t, [(52, -210), (62, -80), (74, 70), (86, 150), (98, 208), (105, 226)])
-        cam = Camera(x=kf(t, [(52, -140), (70, -20), (89, 100), (105, 185)]), y=278,
-                     zoom=kf(t, [(52, 1.04), (105, 1.14)]))
+        lx = kf(t, [(52, -220), (62, -80), (74, 70), (86, 150), (98, 208), (105, 226)])
+        cam = Camera(x=kf(t, [(52, -150), (70, -20), (89, 100), (105, 185)]), y=278,
+                     zoom=kf(t, [(52, 1.06), (105, 1.14)]))
         draw_station_room(img, cam, clean=0, awake=0)
         draw_floor_lamp(img, em, cam, LAMP_X, GROUND, on=0, tilt=0)
         draw_switch(img, cam, SWITCH_X, 300, on=False)
@@ -177,8 +177,8 @@ def frame_at(t: float) -> Image.Image:
 
     # 1:45–2:12 — ACCIDENT / FIRST LIGHT.
     if t < 132:
-        cam = Camera(x=kf(t, [(105, 205), (113, 235), (132, 240)]), y=275,
-                     zoom=kf(t, [(105, 1.18), (117, 1.34), (132, 1.19)]))
+        cam = Camera(x=kf(t, [(105, 185), (111, 220), (113, 235), (132, 240)]), y=275,
+                     zoom=kf(t, [(105, 1.14), (117, 1.34), (132, 1.19)]))
         draw_station_room(img, cam, clean=0, awake=0)
         tilt_lamp = kf(t, [(105, 0), (107, 14), (109.5, -10), (112, 6), (114.5, -3), (117, 0)])
         lamp_on = 0.0
@@ -206,8 +206,8 @@ def frame_at(t: float) -> Image.Image:
     # 2:12–3:06 — Lumen deliberately wakes the room.
     if t < 186:
         lx = kf(t, [(132, 187), (141, 310), (150, 500), (163, 710), (178, 980), (186, 1080)])
-        cam = Camera(x=kf(t, [(132, 245), (150, 420), (169, 690), (186, 820)]), y=277,
-                     zoom=kf(t, [(132, 1.14), (155, .98), (186, .92)]))
+        cam = Camera(x=kf(t, [(132, 240), (150, 420), (169, 690), (186, 820)]), y=277,
+                     zoom=kf(t, [(132, 1.19), (139, 1.14), (155, .98), (186, .92)]))
         starts = [143.0, 149.5, 155.7, 161.0, 166.0, 170.6, 175.3, 180.0]
         levels = [q(t, s, s + 1.2) for s in starts]
         awake = sum(levels) / len(levels)
@@ -229,20 +229,20 @@ def frame_at(t: float) -> Image.Image:
         for x, on in zip(LIGHT_XS, levels):
             lights.append((x, 125, 335, .58 * on, (.86, .94, 1.0)))
         draw_dust(em, t, amount=.85, seed=11, drift=.5)
-        img = apply_lighting(img, em, cam, lights, ambient=.03 + .18 * awake,
-                             haze=.014, vignette=.38 - .16 * awake)
+        img = apply_lighting(img, em, cam, lights, ambient=.068 + .142 * awake,
+                             haze=.014, vignette=.34 - .12 * awake)
         return add_letterbox(img)
 
     # 3:06–4:12 — MOTH: curiosity -> synchronized panic -> trust.
     if t < 252:
-        cam = Camera(x=kf(t, [(186, 830), (205, 965), (224, 875), (239, 820), (252, 850)]), y=276,
-                     zoom=kf(t, [(186, .94), (205, 1.10), (224, .98), (239, 1.22), (252, 1.14)]))
+        cam = Camera(x=kf(t, [(186, 820), (205, 965), (224, 875), (239, 820), (252, 850)]), y=276,
+                     zoom=kf(t, [(186, .92), (205, 1.10), (224, .98), (239, 1.22), (252, 1.14)]))
         draw_station_room(img, cam, clean=0, awake=1.0)
         draw_floor_lamp(img, em, cam, LAMP_X, GROUND, on=1)
         for x in LIGHT_XS:
             draw_ceiling_light(img, em, cam, x, on=1)
         if t < 207:
-            lx = 1055
+            lx = kf(t, [(186, 1080), (192, 1068), (200, 1058), (207, 1055)])
         elif t < 229:
             # Panic motion uses an amplitude envelope so it starts and ends at
             # the neighboring poses instead of teleporting at 207s / 229s.
@@ -329,9 +329,9 @@ def frame_at(t: float) -> Image.Image:
     # 4:12–5:35 — TOGETHER: restore the first chamber.
     if t < 335:
         clean = qq(t, 252, 328)
-        lx = kf(t, [(252, 900), (263, 720), (276, 470), (291, 810), (305, 1200), (319, 1460), (335, 1160)])
-        cam = Camera(x=kf(t, [(252, 840), (270, 650), (292, 820), (315, 1180), (335, 1020)]), y=276,
-                     zoom=kf(t, [(252, 1.10), (272, .91), (306, .86), (335, .82)]))
+        lx = kf(t, [(252, 905), (263, 720), (276, 470), (291, 810), (305, 1200), (319, 1460), (335, 1160)])
+        cam = Camera(x=kf(t, [(252, 850), (270, 650), (292, 820), (315, 1180), (335, 1020)]), y=276,
+                     zoom=kf(t, [(252, 1.14), (272, .91), (306, .86), (335, .82)]))
         draw_station_room(img, cam, clean=clean, awake=1.0)
         draw_floor_lamp(img, em, cam, LAMP_X, GROUND, on=1)
         for x in LIGHT_XS:
