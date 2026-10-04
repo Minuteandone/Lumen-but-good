@@ -244,14 +244,30 @@ def frame_at(t: float) -> Image.Image:
         if t < 207:
             lx = 1055
         elif t < 229:
-            p = (t - 207) / 22
-            lx = 1000 + math.sin(p * math.pi * 7.0) * 170
+            # Panic motion uses an amplitude envelope so it starts and ends at
+            # the neighboring poses instead of teleporting at 207s / 229s.
+            p = clamp((t - 207) / 22)
+            center = 1055 + (940 - 1055) * smooth(p)
+            amp = math.sin(math.pi * p) * 165
+            lx = center + math.sin(p * math.pi * 7.0) * amp
         else:
             lx = kf(t, [(229, 940), (235, 900), (252, 905)])
-        if t < 198:
-            mx = kf(t, [(186, 1380), (191, 1240), (198, 1095)])
-            my = kf(t, [(186, 165), (191, 130), (198, 285)]) + math.sin(t * 6) * 13
+
+        if t < 194:
+            mx = kf(t, [(186, 1380), (191, 1240), (194, 1165)])
+            my = kf(t, [(186, 165), (191, 130), (194, 210)]) + math.sin(t * 6) * 13
             perch = False
+            panic = 0
+        elif t < 200:
+            # Actually fly onto Lumen's back rather than changing state in one frame.
+            land = q(t, 194, 200)
+            start_x = 1165
+            start_y = 210 + math.sin(194 * 6) * 13
+            target_x = lx + 38
+            target_y = 318
+            mx = start_x + (target_x - start_x) * land
+            my = start_y + (target_y - start_y) * land + math.sin(t * 7) * 12 * (1 - land)
+            perch = land > .94
             panic = 0
         elif t < 207:
             mx = lx + 38
@@ -259,20 +275,27 @@ def frame_at(t: float) -> Image.Image:
             perch = True
             panic = 0
         elif t < 229:
-            p = (t - 207) / 22
-            mx = lx + math.cos(p * math.pi * 10) * (80 + 55 * math.sin(p * math.pi))
-            my = 285 + math.sin(p * math.pi * 14) * 68
-            perch = False
-            panic = .95
+            # The moth panic begins exactly on the perch and returns cleanly
+            # to the post-panic hover point; the loops grow/shrink in between.
+            p = clamp((t - 207) / 22)
+            envelope = math.sin(math.pi * p)
+            base_x = (lx + 38) * (1 - smooth(p)) + 1005 * smooth(p)
+            base_y = 318 * (1 - smooth(p)) + 275 * smooth(p)
+            mx = base_x + math.cos(p * math.pi * 10) * (92 + 52 * envelope) * envelope
+            my = base_y + math.sin(p * math.pi * 14) * 72 * envelope
+            perch = p < .015
+            panic = .95 * envelope
         elif t < 241:
-            mx = 1005
-            my = 275
+            mx = 1005 + math.sin((t - 229) * .9) * 5
+            my = 275 + math.sin((t - 229) * 1.7) * 4
             perch = False
             panic = 0
         else:
             land = q(t, 241, 248.5)
-            mx = 1005 + (lx + 37 - 1005) * land
-            my = 275 + (318 - 275) * land + math.sin(t * 4) * (1 - land) * 5
+            hover_x = 1005 + math.sin((t - 229) * .9) * 5
+            hover_y = 275 + math.sin((t - 229) * 1.7) * 4
+            mx = hover_x + (lx + 37 - hover_x) * land
+            my = hover_y + (318 - hover_y) * land + math.sin(t * 4) * (1 - land) * 5
             perch = land > .92
             panic = 0
 
@@ -314,16 +337,53 @@ def frame_at(t: float) -> Image.Image:
         for x in LIGHT_XS:
             draw_ceiling_light(img, em, cam, x, on=1)
 
-        perch_windows = [(252, 257), (283, 288), (327, 335)]
-        perched = any(a <= t <= b for a, b in perch_windows)
-        if perched:
-            mx, my = lx + 38, 318
-        else:
-            mx = lx + 120 + math.sin(t * .8) * 70
-            my = 245 + math.sin(t * 2.2) * 45
-        if 286 <= t < 303:
+        # Continuous moth choreography for the restoration montage.
+        flight_x = lx + 120 + math.sin(t * .8) * 70
+        flight_y = 245 + math.sin(t * 2.2) * 45
+        perch_x, perch_y = lx + 38, 318
+        perched = False
+
+        if t < 256:
+            mx, my = perch_x, perch_y
+            perched = True
+        elif t < 260:
+            takeoff = q(t, 256, 260)
+            mx = perch_x + (flight_x - perch_x) * takeoff
+            my = perch_y + (flight_y - perch_y) * takeoff - math.sin(math.pi * takeoff) * 18
+        elif t < 281:
+            mx, my = flight_x, flight_y
+        elif t < 283:
+            land = q(t, 281, 283)
+            mx = flight_x + (perch_x - flight_x) * land
+            my = flight_y + (perch_y - flight_y) * land
+            perched = land > .94
+        elif t < 285.5:
+            mx, my = perch_x, perch_y
+            perched = True
+        elif t < 288:
+            # Take off toward the window-polishing orbit.
+            takeoff = q(t, 285.5, 288)
+            window_x = 1125 + math.sin(t * 1.3) * 32
+            window_y = 178 + math.sin(t * 2.6) * 18
+            mx = perch_x + (window_x - perch_x) * takeoff
+            my = perch_y + (window_y - perch_y) * takeoff - math.sin(math.pi * takeoff) * 20
+        elif t < 303:
             mx = 1125 + math.sin(t * 1.3) * 32
             my = 178 + math.sin(t * 2.6) * 18
+        elif t < 325:
+            back = q(t, 303, 306)
+            window_x = 1125 + math.sin(303 * 1.3) * 32
+            window_y = 178 + math.sin(303 * 2.6) * 18
+            mx = window_x + (flight_x - window_x) * back
+            my = window_y + (flight_y - window_y) * back
+        elif t < 328:
+            land = q(t, 325, 328)
+            mx = flight_x + (perch_x - flight_x) * land
+            my = flight_y + (perch_y - flight_y) * land
+            perched = land > .94
+        else:
+            mx, my = perch_x, perch_y
+            perched = True
         arm = (1, -55, 42) if 307 <= t <= 314 else None
         bx, by = draw_lumen(img, em, cam, lx, GROUND, mood="happy", gaze_x=.55,
                             bulb=.66, wheel=(t - 252) * 3.2,
