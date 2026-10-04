@@ -15,7 +15,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  render:
+    name: Render chunk ${{ matrix.chunk }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        chunk: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install renderer dependencies
+        run: pip install -r requirements.txt
+
+      - name: Render chunk
+        env:
+          LUMEN_PRESET: veryfast
+        run: python tools/render_full.py --fps 24 --chunk-seconds 15 --only ${{ matrix.chunk }}
+
+      - name: Upload chunk
+        uses: actions/upload-artifact@v4
+        with:
+          name: ep01-chunk-${{ matrix.chunk }}
+          path: media/chunks/*.mp4
+          if-no-files-found: error
+          compression-level: 0
+
   build:
+    needs: render
     runs-on: ubuntu-latest
 
     steps:
@@ -31,20 +67,19 @@ jobs:
       - name: Install renderer dependencies
         run: pip install -r requirements.txt
 
-      - name: Restore rendered chunk cache
-        uses: actions/cache@v4
+      - name: Download rendered chunks
+        uses: actions/download-artifact@v5
         with:
-          path: |
-            media/chunks
-            media/ep01.wav
-          key: lumen-ep01-${{ runner.os }}-${{ hashFiles('engine/**', 'episodes/**', 'tools/render_full.py', 'requirements.txt') }}
+          pattern: ep01-chunk-*
+          path: media/chunks
+          merge-multiple: true
 
-      - name: Render Episode 1
+      - name: Assemble Episode 1
         env:
           LUMEN_PRESET: veryfast
         run: |
           mkdir -p site/media
-          python tools/render_full.py --fps 24 --chunk-seconds 15 --missing --assemble --output site/media/ep01_first_light.mp4
+          python tools/render_full.py --fps 24 --chunk-seconds 15 --assemble --output site/media/ep01_first_light.mp4
 
       - name: Render poster
         run: |
